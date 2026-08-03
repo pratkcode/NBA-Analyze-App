@@ -1,0 +1,5 @@
+{
+  "name": "nba-analytics-app",
+  "private": true,
+  "workspaces": ["client", "server"]
+}
