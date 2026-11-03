@@ -28,9 +28,9 @@ export default function TeamStats(){
 
   return (
     <div className="max-w-7xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <h1 className="text-3xl font-bold">Team Statistics</h1>
-        <input placeholder="Filter teams" value={filter} onChange={(e)=>setFilter(e.target.value)} className="px-3 py-2 rounded-md bg-white/10" />
+        <input placeholder="Filter teams" value={filter} onChange={(e)=>setFilter(e.target.value)} className="w-full sm:w-64 px-3 py-2 rounded-md bg-white/5 border border-white/10 outline-none focus:border-accent/60 placeholder:text-white/40" />
       </div>
 
       {loading ? <LoadingSkeleton className="h-40" /> : (

@@ -1,5 +1,25 @@
 import { useEffect, useState } from 'react'
-import { searchPlayersWithAverages, getSeasonAverages, getPlayerGameLog } from '../services/api'
+import { searchPlayersWithAverages, getPlayer, getSeasonAverages, getPlayerGameLog } from '../services/api'
+
+// Loads a player by id. If `known` (e.g. the clicked search result) already
+// matches, it's used directly and no request is made.
+export function usePlayer(id, known) {
+  const hasKnown = known && String(known.id) === String(id)
+  const [data, setData] = useState(hasKnown ? known : null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    if (!id) { setData(null); return }
+    if (hasKnown) { setData(known); setError(null); return }
+    let cancelled = false
+    setLoading(true); setData(null); setError(null)
+    getPlayer(id).then(res => { if (!cancelled) setData(res) }).catch(e => { if (!cancelled) setError(e) }).finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [id, hasKnown])
+
+  return { data, loading, error }
+}
 
 export function useSeasonAverages(playerIds = [], season) {
   const [data, setData] = useState(null)

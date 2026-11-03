@@ -1,9 +1,10 @@
 import React, { useState } from 'react'
+import { Link, useLocation, useSearchParams } from 'react-router-dom'
 import Card from '../components/Card'
 import PlayerSearch from '../components/PlayerSearch'
 import RadarCompare from '../components/charts/RadarCompare'
 import LoadingSkeleton from '../components/LoadingSkeleton'
-import { useSeasonAverages } from '../hooks/usePlayers'
+import { usePlayer, useSeasonAverages } from '../hooks/usePlayers'
 import { errorMessage } from '../services/api'
 import { currentSeason, seasonLabel } from '../utils/season'
 
@@ -24,8 +25,19 @@ const PCT_STATS = [
 const fullName = p => `${p.first_name} ${p.last_name}`
 
 export default function Compare(){
-  const [a, setA] = useState(null)
-  const [b, setB] = useState(null)
+  // Picks live in the URL (?a=ID&b=ID) so a comparison can be shared or refreshed.
+  const [params, setParams] = useSearchParams()
+  const location = useLocation()
+  const [known, setKnown] = useState(location.state || {})
+  const { data: a } = usePlayer(params.get('a'), known.a)
+  const { data: b } = usePlayer(params.get('b'), known.b)
+
+  const choose = slot => p => {
+    setKnown(k => ({ ...k, [slot]: p }))
+    setParams(prev => { const next = new URLSearchParams(prev); next.set(slot, p.id); return next }, { replace: true })
+  }
+  const setA = choose('a')
+  const setB = choose('b')
   const season = currentSeason()
   // Only fetch once both are picked (the free API tier allows 5 requests/min).
   const ids = a && b ? [a.id, b.id] : []
@@ -43,12 +55,12 @@ export default function Compare(){
         <Card>
           <div className="mb-4 flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-[#7c5cff]" />Player A</div>
           <PlayerSearch onSelect={setA} />
-          {a && <div className="mt-4 text-lg font-semibold">{fullName(a)} <span className="text-white/50 font-normal text-sm">{a.team?.abbreviation}</span></div>}
+          {a && <div className="mt-4 text-lg font-semibold"><Link to={`/players/${a.id}`} state={{ player: a }} className="hover:underline">{fullName(a)}</Link> <span className="text-white/50 font-normal text-sm">{a.team?.abbreviation}</span></div>}
         </Card>
         <Card>
           <div className="mb-4 flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-[#00d8ff]" />Player B</div>
           <PlayerSearch onSelect={setB} />
-          {b && <div className="mt-4 text-lg font-semibold">{fullName(b)} <span className="text-white/50 font-normal text-sm">{b.team?.abbreviation}</span></div>}
+          {b && <div className="mt-4 text-lg font-semibold"><Link to={`/players/${b.id}`} state={{ player: b }} className="hover:underline">{fullName(b)}</Link> <span className="text-white/50 font-normal text-sm">{b.team?.abbreviation}</span></div>}
         </Card>
       </div>
 

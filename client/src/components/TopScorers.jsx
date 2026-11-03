@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { getTopScorers, errorMessage } from '../services/api'
 import { currentSeason } from '../utils/season'
 import LoadingSkeleton from './LoadingSkeleton'
@@ -33,7 +34,7 @@ export default function TopScorers({ limit = 7, season = currentSeason() }){
           <ul className="mt-4 space-y-2 text-sm text-white/80">
             {data.map(p => (
               <li key={p.player_id} className="flex justify-between items-center">
-                <div className="font-medium">{p.player ? `${p.player.first_name} ${p.player.last_name}` : `Player ${p.player_id}`}</div>
+                <div className="font-medium">{p.player ? <Link to={`/players/${p.player.id}`} className="hover:text-accent transition-colors">{p.player.first_name} {p.player.last_name}</Link> : `Player ${p.player_id}`}</div>
                 <div className="text-lg font-semibold">{p.pts != null ? p.pts.toFixed(1) : '—'}</div>
               </li>
             ))}

@@ -7,6 +7,11 @@ export async function searchPlayersWithAverages(q, season) {
   return res.data
 }
 
+export async function getPlayer(id) {
+  const res = await api.get(`/players/${id}`)
+  return res.data
+}
+
 export async function getSeasonAverages(player_ids, season) {
   const params = { player_ids: player_ids.join(','), season }
   const res = await api.get('/season_averages', { params })

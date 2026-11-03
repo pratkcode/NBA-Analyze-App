@@ -14,17 +14,15 @@ body {
   font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
 }
 
-/* Hero animated background */
+/* Hero background glow (static: an animated filter repaints the whole section every frame) */
 .hero-bg {
-  background-image: radial-gradient(circle at 20% 20%, rgba(124,92,255,0.12), transparent 10%), radial-gradient(circle at 80% 80%, rgba(0,200,255,0.06), transparent 12%);
-  animation: hue 12s linear infinite;
-}
-@keyframes hue {
-  0% { filter: hue-rotate(0deg); }
-  50% { filter: hue-rotate(45deg) saturate(1.05); }
-  100% { filter: hue-rotate(0deg); }
+  background-image: radial-gradient(circle at 20% 20%, rgba(124,92,255,0.14), transparent 35%), radial-gradient(circle at 85% 80%, rgba(0,200,255,0.08), transparent 35%);
 }
 
-/* Smooth scroll and transitions */
 html { scroll-behavior: smooth; }
-.fade-up { transform: translateY(10px); opacity: 0; }
+
+/* Respect the OS "reduce motion" setting */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+}

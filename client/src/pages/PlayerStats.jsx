@@ -1,7 +1,8 @@
-import React, { useState } from 'react'
+import React from 'react'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import Card from '../components/Card'
 import PlayerSearch from '../components/PlayerSearch'
-import { useSeasonAverages, usePlayerGameLog } from '../hooks/usePlayers'
+import { usePlayer, useSeasonAverages, usePlayerGameLog } from '../hooks/usePlayers'
 import LoadingSkeleton from '../components/LoadingSkeleton'
 import SimpleLineChart from '../components/charts/SimpleLineChart'
 import { currentSeason, seasonLabel } from '../utils/season'
@@ -19,13 +20,17 @@ const AVG_STATS = [
 ]
 
 export default function PlayerStats(){
-  const [selected, setSelected] = useState(null)
+  const { id } = useParams()
+  const navigate = useNavigate()
+  const location = useLocation()
   const season = currentSeason()
-  // The search result already has the full player profile.
-  const player = selected
-  const playerIds = selected ? [selected.id] : []
+  // Coming from search or a leaderboard, the player is passed along so no extra request is needed.
+  const { data: player, loading: playerLoading, error: playerError } = usePlayer(id, location.state?.player)
+  const playerIds = player ? [player.id] : []
   const { data: avgs, loading: avgLoading, error: avgError } = useSeasonAverages(playerIds, season)
-  const { data: games, loading: gamesLoading, error: gamesError } = usePlayerGameLog(selected?.id, season)
+  const { data: games, loading: gamesLoading, error: gamesError } = usePlayerGameLog(player?.id, season)
+
+  const openPlayer = p => navigate(`/players/${p.id}`, { state: { player: p } })
 
   const avg = avgs?.data?.[0]
   // Oldest → newest so the chart reads left to right.
@@ -35,11 +40,15 @@ export default function PlayerStats(){
     <div className="max-w-7xl mx-auto">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <h1 className="text-3xl font-bold">Player Statistics</h1>
-        <PlayerSearch onSelect={setSelected} />
+        <PlayerSearch onSelect={openPlayer} />
       </div>
 
-      {!selected ? (
+      {!id ? (
         <Card><div className="text-white/60">Search for a player to see their stats.</div></Card>
+      ) : playerLoading ? (
+        <LoadingSkeleton className="h-48" />
+      ) : playerError || !player ? (
+        <Card><div className="text-white/60">{playerError ? errorMessage(playerError, 'Could not load this player.') : 'Player not found.'}</div></Card>
       ) : (
         <>
           <div className="grid md:grid-cols-3 gap-6">
@@ -47,6 +56,7 @@ export default function PlayerStats(){
               <div>
                   <h3 className="text-2xl font-semibold">{player.first_name} {player.last_name}</h3>
                   <div className="text-sm text-white/70 mt-1">{player?.team?.full_name}</div>
+                  <Link to={`/compare?a=${player.id}`} state={{ a: player }} className="inline-block mt-3 text-sm text-accent hover:underline">Compare with another player →</Link>
                   <dl className="mt-4 grid grid-cols-2 gap-y-2 text-sm">
                     <Info label="Position" value={player?.position} />
                     <Info label="Jersey" value={player?.jersey_number && `#${player.jersey_number}`} />

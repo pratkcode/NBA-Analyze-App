@@ -17,7 +17,7 @@ export default function Landing(){
       <section className="grid md:grid-cols-3 gap-6">
         {FEATURES.map(f => (
           <Link key={f.to} to={f.to} className="block group">
-            <Card className="h-full transition-colors group-hover:border-accent/40">
+            <Card interactive className="h-full group-hover:border-accent/40">
               <h3 className="text-xl font-semibold">{f.title} <span className="text-accent transition-transform inline-block group-hover:translate-x-1">→</span></h3>
               <p className="text-sm text-white/70 mt-1">{f.text}</p>
             </Card>

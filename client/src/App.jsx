@@ -1,20 +1,21 @@
 import React, { useEffect } from 'react'
 import { Routes, Route, useLocation } from 'react-router-dom'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, MotionConfig, motion } from 'framer-motion'
 import Layout from './components/Layout'
 import Landing from './pages/Landing'
 import Dashboard from './pages/Dashboard'
 import TeamStats from './pages/TeamStats'
 import PlayerStats from './pages/PlayerStats'
 import Compare from './pages/Compare'
+import NotFound from './pages/NotFound'
 
 function PageWrapper({ children }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 8 }}
+      initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -8 }}
-      transition={{ duration: 0.45 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.18, ease: 'easeOut' }}
     >
       {children}
     </motion.div>
@@ -23,21 +24,34 @@ function PageWrapper({ children }) {
 
 export default function App(){
   const location = useLocation()
+
   useEffect(() => {
     document.documentElement.classList.add('dark')
   }, [])
 
+  // Start each new page at the top.
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [location.pathname])
+
+  const page = el => <PageWrapper>{el}</PageWrapper>
+
   return (
-    <Layout>
-      <AnimatePresence mode="wait">
-        <Routes location={location} key={location.pathname}>
-          <Route path="/" element={<PageWrapper><Landing /></PageWrapper>} />
-          <Route path="/dashboard" element={<PageWrapper><Dashboard /></PageWrapper>} />
-          <Route path="/teams" element={<PageWrapper><TeamStats /></PageWrapper>} />
-          <Route path="/players" element={<PageWrapper><PlayerStats /></PageWrapper>} />
-          <Route path="/compare" element={<PageWrapper><Compare /></PageWrapper>} />
-        </Routes>
-      </AnimatePresence>
-    </Layout>
+    // reducedMotion="user": skip movement animations if the OS asks for less motion.
+    <MotionConfig reducedMotion="user">
+      <Layout>
+        <AnimatePresence mode="wait" initial={false}>
+          <Routes location={location} key={location.pathname}>
+            <Route path="/" element={page(<Landing />)} />
+            <Route path="/dashboard" element={page(<Dashboard />)} />
+            <Route path="/teams" element={page(<TeamStats />)} />
+            <Route path="/players" element={page(<PlayerStats />)} />
+            <Route path="/players/:id" element={page(<PlayerStats />)} />
+            <Route path="/compare" element={page(<Compare />)} />
+            <Route path="*" element={page(<NotFound />)} />
+          </Routes>
+        </AnimatePresence>
+      </Layout>
+    </MotionConfig>
   )
 }

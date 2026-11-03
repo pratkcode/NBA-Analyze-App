@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { getTopScorers, errorMessage } from '../services/api'
 import { currentSeason } from '../utils/season'
 import LoadingSkeleton from './LoadingSkeleton'
@@ -27,12 +28,12 @@ export default function Leaderboard({ limit = 20, season = currentSeason() }){
       {!loading && !error && data && data.length === 0 && <div className="text-sm text-white/60">No leaderboard data for this season yet.</div>}
       {!loading && !error && data && data.length > 0 && (
         <>
-          <SimpleBarChart data={data.map((d, i) => ({ name: `#${d.rank ?? i + 1}`, value: d.pts || 0 }))} />
+          <SimpleBarChart data={data.slice(0, 10).map(d => ({ name: d.player?.last_name || '', value: d.pts || 0 }))} />
           <ul className="mt-4 space-y-2 text-sm text-white/80">
             {data.map((p, idx) => (
               <li key={p.player_id || idx} className="flex justify-between items-center">
                 <div>
-                  <div className="font-medium">{p.player ? `${p.player.first_name} ${p.player.last_name}` : `Player ${p.player_id || ''}`}</div>
+                  <div className="font-medium">{p.player ? <Link to={`/players/${p.player.id}`} className="hover:text-accent transition-colors">{p.player.first_name} {p.player.last_name}</Link> : `Player ${p.player_id || ''}`}</div>
                   {p.games != null && <div className="text-xs text-white/60">{p.games} games</div>}
                 </div>
                 <div className="text-lg font-semibold">{p.pts != null ? p.pts.toFixed(1) : '—'}</div>

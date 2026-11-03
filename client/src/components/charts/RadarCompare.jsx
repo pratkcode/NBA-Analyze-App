@@ -1,5 +1,6 @@
 import React from 'react'
-import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Legend } from 'recharts'
+import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Legend, Tooltip } from 'recharts'
+import { tooltipProps } from './theme'
 
 // Values are expected on a 0–100 scale so different stats share one axis.
 export default function RadarCompare({ dataA = [], dataB = [], keys = [], nameA = 'Player A', nameB = 'Player B' }){
@@ -18,6 +19,7 @@ export default function RadarCompare({ dataA = [], dataB = [], keys = [], nameA 
           <PolarRadiusAxis domain={[0, 100]} tick={false} axisLine={false} />
           <Radar name={nameA} dataKey="A" stroke="#7c5cff" fill="#7c5cff" fillOpacity={0.25} />
           <Radar name={nameB} dataKey="B" stroke="#00d8ff" fill="#00d8ff" fillOpacity={0.15} />
+          <Tooltip {...tooltipProps} formatter={v => [`${v}%`, 'of elite level']} />
           <Legend wrapperStyle={{ fontSize: 12 }} />
         </RadarChart>
       </ResponsiveContainer>
