@@ -30,7 +30,7 @@ export default function TeamStats(){
     <div className="max-w-7xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold">Team Statistics</h1>
-        <input placeholder="Filter teams" value={filter} onChange={(e)=>setFilter(e.target.value)} className="px-3 py-2 rounded-md bg-white/6" />
+        <input placeholder="Filter teams" value={filter} onChange={(e)=>setFilter(e.target.value)} className="px-3 py-2 rounded-md bg-white/10" />
       </div>
 
       {loading ? <LoadingSkeleton className="h-40" /> : (
@@ -43,7 +43,7 @@ export default function TeamStats(){
                   <div className="text-xs text-white/70">{t.abbreviation}</div>
                 </div>
                 <div>
-                  <button onClick={()=>loadNext(t)} className="px-3 py-1 bg-white/6 rounded-md">Next</button>
+                  <button onClick={()=>loadNext(t)} className="px-3 py-1 bg-white/10 rounded-md">Next</button>
                 </div>
               </div>
             </Card>

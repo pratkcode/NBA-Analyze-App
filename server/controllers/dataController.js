@@ -34,6 +34,10 @@ exports.seasonAverages = handle(req =>
   nba.seasonAverages(parseIds(req.query.player_ids), req.query.season)
 )
 
+exports.playerGameLog = handle(req => nba.playerGameLog(req.params.id, req.query.season))
+
+exports.standings = handle(() => nba.standings())
+
 exports.getTeams = handle(() => nba.teams())
 
 exports.recentGames = handle(req => nba.recentGames(clampLimit(req.query.per_page, 25, 100)))

@@ -18,6 +18,7 @@ const bdl = axios.create({
 
 // ESPN's public scoreboard: free, no key, includes live scores.
 const ESPN_SCOREBOARD = 'https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard'
+const ESPN_STANDINGS = 'https://site.api.espn.com/apis/v2/sports/basketball/nba/standings'
 
 // Error with an HTTP status and a message that is safe to show users.
 class ApiError extends Error {
@@ -126,12 +127,14 @@ const service = {
   async searchPlayersWithAverages(query, season) {
     const players = (await service.searchPlayers(query)).data || []
     let averages = []
-    let averagesError = null
-    if (players.length) {
+    let averagesError = cache.get('avgs:notInPlan') || null
+    if (players.length && !averagesError) {
       try {
         averages = (await service.seasonAverages(players.map(p => p.id), season)).data
       } catch (err) {
         averagesError = err.message
+        // Don't spend a request on every search when the plan doesn't include averages.
+        if (err.status === 403) cache.set('avgs:notInPlan', err.message, HOUR)
       }
     }
     const byId = new Map(averages.map(a => [a.player_id, a]))
@@ -215,6 +218,64 @@ const service = {
           }
         }),
       }
+    })
+  },
+
+  // A player's most recent games this season (newest first). Needs the ALL-STAR tier.
+  async playerGameLog(playerId, season, limit = 10) {
+    const s = parseSeason(season)
+    return cached(`gameLog:${playerId}:${s}`, 30 * MINUTE, async () => {
+      const res = await bdlGet('/stats', { 'player_ids[]': playerId, 'seasons[]': s, per_page: 100 })
+      const rows = (res.data || [])
+        .filter(r => r.game && r.min && r.min !== '00' && r.min !== '0')
+        .sort((a, b) => b.game.date.localeCompare(a.game.date))
+        .slice(0, limit)
+        .map(r => {
+          const g = r.game
+          const teamId = r.team?.id
+          const home = g.home_team_id === teamId
+          const opponentId = home ? g.visitor_team_id : g.home_team_id
+          return {
+            game_id: g.id,
+            date: g.date,
+            home,
+            opponent_id: opponentId,
+            team_score: home ? g.home_team_score : g.visitor_team_score,
+            opponent_score: home ? g.visitor_team_score : g.home_team_score,
+            min: r.min, pts: r.pts, reb: r.reb, ast: r.ast, stl: r.stl, blk: r.blk,
+            fgm: r.fgm, fga: r.fga, fg3m: r.fg3m, fg3a: r.fg3a, turnover: r.turnover,
+          }
+        })
+      // Attach opponent abbreviations from the (cached) team list.
+      const teams = (await service.teams()).data || []
+      const abbr = new Map(teams.map(t => [t.id, t.abbreviation]))
+      return { data: rows.map(r => ({ ...r, opponent: abbr.get(r.opponent_id) || '' })) }
+    })
+  },
+
+  // Conference standings from ESPN, sorted by seed. Free, no key.
+  async standings() {
+    return cached('standings', 15 * MINUTE, async () => {
+      const res = await axios.get(ESPN_STANDINGS, { timeout: 10000 })
+      const conferences = (res.data?.children || []).map(conf => {
+        const teams = (conf.standings?.entries || []).map(e => {
+          const stat = name => e.stats?.find(s => s.name === name)
+          return {
+            abbreviation: e.team?.abbreviation,
+            name: e.team?.displayName,
+            logo: e.team?.logos?.[0]?.href,
+            seed: Number(stat('playoffSeed')?.value) || null,
+            wins: Number(stat('wins')?.value) || 0,
+            losses: Number(stat('losses')?.value) || 0,
+            win_pct: stat('winPercent')?.displayValue,
+            games_behind: stat('gamesBehind')?.displayValue,
+            streak: stat('streak')?.displayValue,
+          }
+        })
+        teams.sort((a, b) => (a.seed ?? 99) - (b.seed ?? 99))
+        return { name: conf.name, abbreviation: conf.abbreviation, teams }
+      })
+      return { data: conferences }
     })
   },
 

@@ -2,18 +2,8 @@ import axios from 'axios'
 
 const api = axios.create({ baseURL: '/api', timeout: 10000 })
 
-export async function searchPlayers(q) {
-  const res = await api.get('/players', { params: { search: q } })
-  return res.data
-}
-
 export async function searchPlayersWithAverages(q, season) {
   const res = await api.get('/players/with-averages', { params: { search: q, season } })
-  return res.data
-}
-
-export async function getPlayer(id) {
-  const res = await api.get(`/players/${id}`)
   return res.data
 }
 
@@ -35,6 +25,16 @@ export async function getRecentGames(per_page = 25) {
 
 export async function getLiveScores() {
   const res = await api.get('/live')
+  return res.data
+}
+
+export async function getStandings() {
+  const res = await api.get('/standings')
+  return res.data
+}
+
+export async function getPlayerGameLog(id, season) {
+  const res = await api.get(`/players/${id}/games`, { params: { season } })
   return res.data
 }
 

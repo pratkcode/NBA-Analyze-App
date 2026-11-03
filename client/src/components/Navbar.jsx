@@ -2,10 +2,12 @@ import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 
+const MotionLink = motion(Link)
+
 export default function Navbar(){
   const [open, setOpen] = useState(false)
   return (
-    <header className="sticky top-0 z-40 backdrop-blur-md bg-black/30 border-b border-white/6">
+    <header className="sticky top-0 z-40 backdrop-blur-md bg-black/30 border-b border-white/10">
       <div className="max-w-7xl mx-auto flex items-center justify-between p-4 md:p-6">
         <Link to="/" className="text-xl font-semibold tracking-tight">NBA<span className="text-accent">Analytics</span></Link>
         <nav className="hidden md:flex gap-8 items-center">
@@ -13,7 +15,7 @@ export default function Navbar(){
           <NavLink to="/teams">Teams</NavLink>
           <NavLink to="/players">Players</NavLink>
           <NavLink to="/compare">Compare</NavLink>
-          <motion.button whileHover={{ y: -2 }} className="px-4 py-2 bg-accent/90 rounded-md shadow-md">Get Started</motion.button>
+          <MotionLink to="/dashboard" whileHover={{ y: -2 }} className="px-4 py-2 bg-accent/90 rounded-md shadow-md">Get Started</MotionLink>
         </nav>
         <button className="md:hidden p-2" onClick={()=>setOpen(!open)} aria-label="menu">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
@@ -44,6 +46,6 @@ function NavLink({ to, children }){
 
 function MobileLink({ to, children }){
   return (
-    <Link to={to} className="block py-3 px-2 rounded-md hover:bg-white/4">{children}</Link>
+    <Link to={to} className="block py-3 px-2 rounded-md hover:bg-white/5">{children}</Link>
   )
 }
