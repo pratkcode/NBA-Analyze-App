@@ -1,48 +1,46 @@
 import React, { useEffect, useState } from 'react'
-import axios from 'axios'
+import { getTopScorers, errorMessage } from '../services/api'
+import { currentSeason } from '../utils/season'
 import LoadingSkeleton from './LoadingSkeleton'
 import SimpleBarChart from './charts/SimpleBarChart'
 
-export default function Leaderboard({ limit = 20, season = new Date().getFullYear() }){
+export default function Leaderboard({ limit = 20, season = currentSeason() }){
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
   useEffect(() => {
     let cancelled = false
-    const fetch = async () => {
-      setLoading(true); setError(null)
-      try {
-        const res = await axios.get(`/api/leaderboard/top-scorers`, { params: { limit, season } })
-        if (!cancelled) setData(res.data.data || [])
-      } catch (e) { if(!cancelled) setError(e) }
-      finally { if(!cancelled) setLoading(false) }
-    }
-    fetch()
+    setLoading(true); setError(null)
+    getTopScorers(limit, season)
+      .then(res => { if (!cancelled) setData(res.data || []) })
+      .catch(e => { if (!cancelled) setError(errorMessage(e, 'Failed to load leaderboard.')) })
+      .finally(() => { if (!cancelled) setLoading(false) })
     return () => { cancelled = true }
   }, [limit, season])
-
-  if (loading) return <LoadingSkeleton className="h-48" />
-  if (error) return <div className="text-red-400">Failed to load leaderboard</div>
-  if (!data) return null
-
-  const chartData = data.map((d,i) => ({ name: `#${i+1}`, value: d.pts || 0 }))
 
   return (
     <div>
       <h3 className="font-semibold mb-3">Leaderboard — Top Scorers</h3>
-      <SimpleBarChart data={chartData} />
-      <ul className="mt-4 space-y-2 text-sm text-white/80">
-        {data.map((p, idx) => (
-          <li key={p.player_id || idx} className="flex justify-between items-center">
-            <div>
-              <div className="font-medium">{p.player && p.player.first_name ? `${p.player.first_name} ${p.player.last_name}` : `Player ${p.player_id || ''}`}</div>
-              <div className="text-xs text-white/60">{p.team ? p.team : ''}</div>
-            </div>
-            <div className="text-lg font-semibold">{p.pts ? p.pts.toFixed(1) : '—'}</div>
-          </li>
-        ))}
-      </ul>
+      {loading && <LoadingSkeleton className="h-48" />}
+      {!loading && error && <div className="text-sm text-white/60">{error}</div>}
+      {!loading && !error && data && data.length === 0 && <div className="text-sm text-white/60">No leaderboard data for this season yet.</div>}
+      {!loading && !error && data && data.length > 0 && (
+        <>
+          <SimpleBarChart data={data.map((d, i) => ({ name: `#${d.rank ?? i + 1}`, value: d.pts || 0 }))} />
+          <ul className="mt-4 space-y-2 text-sm text-white/80">
+            {data.map((p, idx) => (
+              <li key={p.player_id || idx} className="flex justify-between items-center">
+                <div>
+                  <div className="font-medium">{p.player ? `${p.player.first_name} ${p.player.last_name}` : `Player ${p.player_id || ''}`}</div>
+                  {p.games != null && <div className="text-xs text-white/60">{p.games} games</div>}
+                </div>
+                <div className="text-lg font-semibold">{p.pts != null ? p.pts.toFixed(1) : '—'}</div>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
     </div>
   )
 }

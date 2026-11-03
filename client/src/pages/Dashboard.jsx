@@ -2,14 +2,13 @@ import React from 'react'
 import Card from '../components/Card'
 import { useTeams, useRecentGames, useLiveScores } from '../hooks/useTeams'
 import LoadingSkeleton from '../components/LoadingSkeleton'
-import SimpleLineChart from '../components/charts/SimpleLineChart'
 import TopScorers from '../components/TopScorers'
 import Leaderboard from '../components/Leaderboard'
 
 export default function Dashboard(){
   const { data: teams, loading: teamsLoading } = useTeams()
   const { data: recent, loading: recentLoading } = useRecentGames()
-  const { data: live, loading: liveLoading } = useLiveScores()
+  const { data: live, loading: liveLoading, error: liveError } = useLiveScores()
 
   
 
@@ -22,9 +21,21 @@ export default function Dashboard(){
         </Card>
         <div className="mt-6">
           <Card>
-            <h4 className="font-semibold mb-2">Live Scores</h4>
+            <h4 className="font-semibold mb-2">Today's Games</h4>
             {liveLoading && <LoadingSkeleton className="h-16" />}
-            {!liveLoading && live && <div className="text-sm text-white/70">{live.message || 'Live data'}</div>}
+            {!liveLoading && liveError && <div className="text-sm text-white/60">Scores unavailable right now.</div>}
+            {!liveLoading && live?.data?.length === 0 && <div className="text-sm text-white/60">No games today.</div>}
+            {!liveLoading && live?.data?.length > 0 && (
+              <ul className="space-y-3 text-sm">
+                {live.data.map(g => (
+                  <li key={g.id}>
+                    <div className="flex justify-between"><span>{g.away.abbreviation}</span><span className="font-semibold">{g.state !== 'pre' ? g.away.score : ''}</span></div>
+                    <div className="flex justify-between"><span>{g.home.abbreviation}</span><span className="font-semibold">{g.state !== 'pre' ? g.home.score : ''}</span></div>
+                    <div className={`text-xs ${g.state === 'in' ? 'text-red-400' : 'text-white/50'}`}>{g.status}</div>
+                  </li>
+                ))}
+              </ul>
+            )}
           </Card>
         </div>
       </aside>

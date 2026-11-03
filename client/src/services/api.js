@@ -28,8 +28,8 @@ export async function getTeams() {
   return res.data
 }
 
-export async function getRecentGames(page = 1, per_page = 25) {
-  const res = await api.get('/games/recent', { params: { page, per_page } })
+export async function getRecentGames(per_page = 25) {
+  const res = await api.get('/games/recent', { params: { per_page } })
   return res.data
 }
 
@@ -38,22 +38,17 @@ export async function getLiveScores() {
   return res.data
 }
 
-export async function searchSportsdbTeams(name) {
-  const res = await api.get('/sportsdb/teams', { params: { t: name } })
+export async function getTeamUpcoming(teamId) {
+  const res = await api.get(`/teams/${teamId}/upcoming`)
   return res.data
 }
 
-export async function searchSportsdbPlayers(name) {
-  const res = await api.get('/sportsdb/searchplayers', { params: { p: name } })
+export async function getTopScorers(limit = 20, season) {
+  const res = await api.get('/leaderboard/top-scorers', { params: { limit, season } })
   return res.data
 }
 
-export async function getSportsdbNextEvents(teamId) {
-  const res = await api.get(`/sportsdb/events/next/${teamId}`)
-  return res.data
-}
-
-export async function getSportsdbEvent(id) {
-  const res = await api.get(`/sportsdb/event/${id}`)
-  return res.data
+// Readable message from a failed request (the server sends { error }).
+export function errorMessage(err, fallback = 'Could not load data.') {
+  return err?.response?.data?.error || fallback
 }

@@ -4,12 +4,15 @@ import PlayerSearch from '../components/PlayerSearch'
 import { usePlayer, useSeasonAverages } from '../hooks/usePlayers'
 import LoadingSkeleton from '../components/LoadingSkeleton'
 import SimpleLineChart from '../components/charts/SimpleLineChart'
+import { currentSeason, seasonLabel } from '../utils/season'
+import { errorMessage } from '../services/api'
 
 export default function PlayerStats(){
   const [selected, setSelected] = useState(null)
   const { data: player, loading: playerLoading } = usePlayer(selected?.id)
   const playerIds = selected ? [selected.id] : []
-  const { data: avgs, loading: avgLoading } = useSeasonAverages(playerIds, new Date().getFullYear())
+  const season = currentSeason()
+  const { data: avgs, loading: avgLoading, error: avgError } = useSeasonAverages(playerIds, season)
 
   const sampleTrend = [{name:'G1', value:20},{name:'G2', value:24},{name:'G3', value:18},{name:'G4', value:28}]
 
@@ -31,12 +34,12 @@ export default function PlayerStats(){
         </Card>
 
         <Card>
-          <h3 className="font-semibold">Season Averages</h3>
+          <h3 className="font-semibold">Season Averages <span className="text-white/50 font-normal">{seasonLabel(season)}</span></h3>
           {avgLoading ? <LoadingSkeleton className="h-32" /> : (
             <div className="text-sm text-white/70 mt-2">
               {avgs && avgs.data && avgs.data.length ? (
                 <div>PPG: {avgs.data[0].pts} — REB: {avgs.data[0].reb} — AST: {avgs.data[0].ast}</div>
-              ) : <div className="text-white/60">No season averages available</div>}
+              ) : <div className="text-white/60">{avgError ? errorMessage(avgError) : selected ? 'No season averages available' : 'Select a player'}</div>}
             </div>
           )}
         </Card>

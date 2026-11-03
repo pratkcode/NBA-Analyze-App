@@ -1,11 +1,12 @@
 import React, { useState } from 'react'
 import { usePlayerSearchWithAverages } from '../hooks/usePlayers'
 import { motion } from 'framer-motion'
+import { currentSeason } from '../utils/season'
 
 export default function PlayerSearch({ onSelect }){
   const [q, setQ] = useState('')
-  const season = new Date().getFullYear()
-  const { data, loading } = usePlayerSearchWithAverages(q, season)
+  const season = currentSeason()
+  const { data, loading, averagesError } = usePlayerSearchWithAverages(q, season)
 
   return (
     <div className="relative w-full max-w-lg">
@@ -20,11 +21,12 @@ export default function PlayerSearch({ onSelect }){
                 <div className="text-xs text-white/60">{p.position || '—'} • {p.height_feet ? `${p.height_feet}'${p.height_inches}` : ''}</div>
               </div>
               <div className="text-right">
-                <div className="text-sm font-semibold">{p.season_avg?.pts ? p.season_avg.pts.toFixed(1) : '—'}</div>
+                <div className="text-sm font-semibold">{p.season_avg?.pts != null ? p.season_avg.pts.toFixed(1) : '—'}</div>
                 <div className="text-xs text-white/60">PPG</div>
               </div>
             </li>
           ))}
+          {averagesError && <li className="px-4 py-2 text-xs text-white/50 border-t border-white/6">PPG unavailable: {averagesError}</li>}
         </motion.ul>
       )}
     </div>

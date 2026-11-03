@@ -57,7 +57,7 @@ export function useSeasonAverages(playerIds = [], season) {
   useEffect(() => {
     if (!playerIds.length) return
     let cancelled = false
-    setLoading(true)
+    setLoading(true); setData(null); setError(null)
     getSeasonAverages(playerIds, season).then((res)=>{ if(!cancelled) setData(res) }).catch(e=>{ if(!cancelled) setError(e) }).finally(()=>{ if(!cancelled) setLoading(false) })
     return () => { cancelled = true }
   }, [playerIds.join(','), season])
@@ -68,6 +68,7 @@ export function useSeasonAverages(playerIds = [], season) {
 // Combined search hook that enriches player search results with season averages
 export function usePlayerSearchWithAverages(query, season) {
   const [data, setData] = useState(null)
+  const [averagesError, setAveragesError] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
@@ -80,6 +81,7 @@ export function usePlayerSearchWithAverages(query, season) {
         const playersRes = await searchPlayersWithAverages(query, season)
         const players = playersRes && playersRes.data ? playersRes.data : []
         if (!cancelled) setData(players)
+        if (!cancelled) setAveragesError(playersRes?.averages_error || null)
       } catch (err) {
         if (!cancelled) setError(err)
       } finally {
@@ -90,5 +92,5 @@ export function usePlayerSearchWithAverages(query, season) {
     return () => { cancelled = true; clearTimeout(t) }
   }, [query, season])
 
-  return { data, loading, error }
+  return { data, loading, error, averagesError }
 }

@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import Card from '../components/Card'
 import { useTeams } from '../hooks/useTeams'
-import { getSportsdbNextEvents } from '../services/api'
+import { getTeamUpcoming, errorMessage } from '../services/api'
 import LoadingSkeleton from '../components/LoadingSkeleton'
 
 export default function TeamStats(){
@@ -9,17 +9,20 @@ export default function TeamStats(){
   const teams = teamsRes && teamsRes.data ? teamsRes.data : []
   const [filter, setFilter] = useState('')
   const [events, setEvents] = useState(null)
+  const [eventsError, setEventsError] = useState(null)
+  const [selectedTeam, setSelectedTeam] = useState(null)
   const [loadingEvents, setLoadingEvents] = useState(false)
 
   const filtered = teams.filter(t => `${t.full_name} ${t.abbreviation}`.toLowerCase().includes(filter.toLowerCase()))
 
-  const loadNext = async (teamId) => {
-    setLoadingEvents(true)
+  const loadNext = async (team) => {
+    setSelectedTeam(team)
+    setLoadingEvents(true); setEventsError(null); setEvents(null)
     try {
-      const res = await getSportsdbNextEvents(teamId)
-      setEvents(res)
+      const res = await getTeamUpcoming(team.id)
+      setEvents(res.data || [])
     } catch (e) {
-      setEvents(null)
+      setEventsError(errorMessage(e, 'Could not load upcoming games.'))
     } finally { setLoadingEvents(false) }
   }
 
@@ -40,7 +43,7 @@ export default function TeamStats(){
                   <div className="text-xs text-white/70">{t.abbreviation}</div>
                 </div>
                 <div>
-                  <button onClick={()=>loadNext(t.id)} className="px-3 py-1 bg-white/6 rounded-md">Next</button>
+                  <button onClick={()=>loadNext(t)} className="px-3 py-1 bg-white/6 rounded-md">Next</button>
                 </div>
               </div>
             </Card>
@@ -50,17 +53,28 @@ export default function TeamStats(){
 
       <div className="mt-8">
         <Card>
-          <h3 className="font-semibold">Upcoming Events</h3>
-          {loadingEvents && <LoadingSkeleton className="h-32" />}
-          {!loadingEvents && events && events.events && events.events.length ? (
+          <h3 className="font-semibold">Upcoming Games{selectedTeam ? ` — ${selectedTeam.full_name}` : ''}</h3>
+          {loadingEvents && <LoadingSkeleton className="h-32 mt-4" />}
+          {!loadingEvents && eventsError && <div className="text-white/60 mt-2">{eventsError}</div>}
+          {!loadingEvents && !eventsError && events && events.length > 0 && (
             <ul className="mt-4 space-y-2 text-sm text-white/80">
-              {events.events.map(ev => (
-                <li key={ev.idEvent}>{ev.dateEvent} — {ev.strEvent}</li>
+              {events.map(g => (
+                <li key={g.id}>{formatGameDate(g)} — {g.visitor_team.full_name} @ {g.home_team.full_name}</li>
               ))}
             </ul>
-          ) : <div className="text-white/60 mt-2">Select a team and click "Next" to load upcoming events.</div>}
+          )}
+          {!loadingEvents && !eventsError && events && events.length === 0 && <div className="text-white/60 mt-2">No games in the next 30 days.</div>}
+          {!loadingEvents && !eventsError && !events && <div className="text-white/60 mt-2">Click "Next" on a team to see its upcoming games.</div>}
         </Card>
       </div>
     </div>
   )
+}
+
+function formatGameDate(g) {
+  const d = new Date(g.datetime || `${g.date}T12:00:00`)
+  const opts = g.datetime
+    ? { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }
+    : { weekday: 'short', month: 'short', day: 'numeric' }
+  return d.toLocaleString(undefined, opts)
 }

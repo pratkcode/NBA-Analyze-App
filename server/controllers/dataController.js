@@ -1,143 +1,58 @@
 const nba = require('../services/nbaService')
 
-exports.getPlayers = async (req, res) => {
+// Wraps a handler so errors become JSON responses with a readable message.
+const handle = fn => async (req, res) => {
   try {
-    const { search } = req.query
-    const data = await nba.searchPlayers(search)
-    res.json(data)
+    res.json(await fn(req))
   } catch (err) {
-    console.error(err)
-    res.status(500).json({ error: 'Failed to fetch players' })
+    const status = err.status || 500
+    if (!err.status) console.error(err) // unexpected bug: log the full error
+    else if (status >= 500) console.warn(`${req.path}: ${err.message}`)
+    res.status(status).json({ error: err.status ? err.message : 'Something went wrong.' })
   }
 }
 
-exports.getPlayersWithAverages = async (req, res) => {
-  try {
-    const { search, season } = req.query
-    const data = await nba.searchPlayersWithAverages(search, season)
-    res.json(data)
-  } catch (err) {
-    console.error(err)
-    res.status(500).json({ error: 'Failed to fetch players with averages' })
-  }
+function parseIds(value) {
+  if (Array.isArray(value)) return value
+  return value ? String(value).split(',') : []
 }
 
-exports.getPlayer = async (req, res) => {
-  try {
-    const { id } = req.params
-    const data = await nba.getPlayer(id)
-    res.json(data)
-  } catch (err) {
-    console.error(err)
-    res.status(500).json({ error: 'Failed to fetch player' })
-  }
+function clampLimit(value, fallback, max) {
+  const n = parseInt(value, 10)
+  return Number.isFinite(n) && n > 0 ? Math.min(n, max) : fallback
 }
 
-exports.seasonAverages = async (req, res) => {
-  try {
-    const { player_ids, season } = req.query
-    const ids = Array.isArray(player_ids) ? player_ids : (player_ids ? player_ids.split(',') : [])
-    const data = await nba.seasonAverages(ids, season)
-    res.json(data)
-  } catch (err) {
-    console.error(err)
-    res.status(500).json({ error: 'Failed to fetch season averages' })
-  }
-}
+exports.getPlayers = handle(req => nba.searchPlayers(req.query.search))
 
-exports.getTeams = async (req, res) => {
-  try {
-    const data = await nba.teamStats()
-    res.json(data)
-  } catch (err) {
-    console.error(err)
-    res.status(500).json({ error: 'Failed to fetch teams' })
-  }
-}
+exports.getPlayersWithAverages = handle(req =>
+  nba.searchPlayersWithAverages(req.query.search, req.query.season)
+)
 
-exports.recentGames = async (req, res) => {
-  try {
-    const { page, per_page } = req.query
-    const data = await nba.recentGames(page || 1, per_page || 25)
-    res.json(data)
-  } catch (err) {
-    console.error(err)
-    res.status(500).json({ error: 'Failed to fetch recent games' })
-  }
-}
+exports.getPlayer = handle(req => nba.getPlayer(req.params.id))
 
-exports.teamGames = async (req, res) => {
-  try {
-    const { teamId, season } = req.params
-    const data = await nba.teamGames(teamId, season)
-    res.json(data)
-  } catch (err) {
-    console.error(err)
-    res.status(500).json({ error: 'Failed to fetch team games' })
-  }
-}
+exports.seasonAverages = handle(req =>
+  nba.seasonAverages(parseIds(req.query.player_ids), req.query.season)
+)
 
-exports.liveScores = async (req, res) => {
-  try {
-    const data = await nba.liveScores()
-    res.json(data)
-  } catch (err) {
-    console.error(err)
-    res.status(500).json({ error: 'Failed to fetch live scores' })
-  }
-}
+exports.getTeams = handle(() => nba.teams())
 
-exports.sportsdbTeams = async (req, res) => {
-  try {
-    const { t } = req.query
-    const data = await nba.sportsdb.searchTeams(t)
-    res.json(data)
-  } catch (err) {
-    console.error(err)
-    res.status(500).json({ error: 'Failed to fetch teams from SportsDB' })
-  }
-}
+exports.recentGames = handle(req => nba.recentGames(clampLimit(req.query.per_page, 25, 100)))
 
-exports.sportsdbSearchPlayers = async (req, res) => {
-  try {
-    const { p } = req.query
-    const data = await nba.sportsdb.searchPlayers(p)
-    res.json(data)
-  } catch (err) {
-    console.error(err)
-    res.status(500).json({ error: 'Failed to search players on SportsDB' })
-  }
-}
+exports.teamGames = handle(req => nba.teamGames(req.params.teamId, req.params.season))
 
-exports.sportsdbNextEvents = async (req, res) => {
-  try {
-    const { teamId } = req.params
-    const data = await nba.sportsdb.teamEventsNext(teamId)
-    res.json(data)
-  } catch (err) {
-    console.error(err)
-    res.status(500).json({ error: 'Failed to fetch next events from SportsDB' })
-  }
-}
+exports.teamUpcoming = handle(req => nba.teamUpcoming(req.params.teamId))
 
-exports.sportsdbEvent = async (req, res) => {
-  try {
-    const { id } = req.params
-    const data = await nba.sportsdb.lookupEvent(id)
-    res.json(data)
-  } catch (err) {
-    console.error(err)
-    res.status(500).json({ error: 'Failed to fetch event from SportsDB' })
-  }
-}
+exports.liveScores = handle(() => nba.liveScores())
 
-exports.leaderboardTop = async (req, res) => {
-  try {
-    const { limit = 50, season } = req.query
-    const data = await require('../services/nbaService').leaderboard.topScorers({ limit: Number(limit), season })
-    res.json(data)
-  } catch (err) {
-    console.error(err)
-    res.status(500).json({ error: 'Failed to build leaderboard' })
-  }
-}
+exports.leaderboardTop = handle(req =>
+  nba.leaders({
+    statType: 'pts',
+    season: req.query.season,
+    limit: clampLimit(req.query.limit, 20, 100),
+  })
+)
+
+exports.meta = handle(async () => ({
+  season: nba.currentSeason(),
+  hasApiKey: Boolean(process.env.BALLDONTLIE_API_KEY),
+}))
