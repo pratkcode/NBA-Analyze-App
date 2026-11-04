@@ -186,7 +186,7 @@ function Overview({ profile, id, season }){
         {games.loading && <LoadingSkeleton className="h-60" />}
         {games.error && <ErrorState error={games.error} onRetry={games.reload} />}
         {games.data && last10.length > 0 && (
-          <SimpleLineChart data={last10.map(g => ({ name: shortDate(g.date), value: g.pts }))} label="PTS" />
+          <SimpleBarChart data={last10.map(g => ({ name: shortDate(g.date), value: g.pts }))} label="PTS" />
         )}
         {games.data && last10.length === 0 && <div className="text-sm text-white/60">No games yet.</div>}
       </Card>
