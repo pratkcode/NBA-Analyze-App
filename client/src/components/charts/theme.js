@@ -18,3 +18,6 @@ export const tooltipProps = {
   labelStyle: { color: 'rgba(255,255,255,0.7)', marginBottom: 2 },
   itemStyle: { color: '#fff' },
 }
+
+// Skip chart animations for people who ask their OS for reduced motion.
+export const animate = typeof window === 'undefined' || !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches

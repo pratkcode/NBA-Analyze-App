@@ -3,17 +3,27 @@ const router = express.Router()
 const ctrl = require('../controllers/dataController')
 
 router.get('/meta', ctrl.meta)
-router.get('/players', ctrl.getPlayers)
-router.get('/players/with-averages', ctrl.getPlayersWithAverages)
-router.get('/players/:id/games', ctrl.playerGameLog)
-router.get('/players/:id', ctrl.getPlayer)
-router.get('/season_averages', ctrl.seasonAverages)
-router.get('/teams', ctrl.getTeams)
-router.get('/teams/:teamId/upcoming', ctrl.teamUpcoming)
-router.get('/teams/:teamId/games/:season?', ctrl.teamGames)
-router.get('/games/recent', ctrl.recentGames)
-router.get('/live', ctrl.liveScores)
+
+// Players
+router.get('/players/search', ctrl.searchPlayers)
+router.get('/players/compare', ctrl.comparePlayers)
+router.get('/players/:id', ctrl.playerProfile)
+router.get('/players/:id/career', ctrl.playerCareer)
+router.get('/players/:id/gamelog', ctrl.playerGameLog)
+router.get('/players/:id/shots', ctrl.playerShots)
+router.get('/players/:id/clutch', ctrl.playerClutch)
+router.get('/leaders', ctrl.leaders)
+
+// Teams
+router.get('/teams', ctrl.teams)
+router.get('/teams/list', ctrl.teamList)
+router.get('/teams/compare', ctrl.compareTeams)
+router.get('/teams/:id', ctrl.teamProfile)
+router.get('/teams/:id/history', ctrl.teamHistory)
+
+// League
 router.get('/standings', ctrl.standings)
-router.get('/leaderboard/top-scorers', ctrl.leaderboardTop)
+router.get('/games/recent', ctrl.recentGames)
+router.get('/scoreboard', ctrl.scoreboard)
 
 module.exports = router

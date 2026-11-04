@@ -1,85 +1,26 @@
+import { useApi } from './useApi'
+import {
+  searchPlayers, getPlayerProfile, getPlayerCareer, getPlayerGameLog,
+  getPlayerShots, getPlayerClutch, comparePlayers, getLeaders,
+} from '../services/api'
 import { useEffect, useState } from 'react'
-import { searchPlayersWithAverages, getPlayer, getSeasonAverages, getPlayerGameLog } from '../services/api'
 
-// Loads a player by id. If `known` (e.g. the clicked search result) already
-// matches, it's used directly and no request is made.
-export function usePlayer(id, known) {
-  const hasKnown = known && String(known.id) === String(id)
-  const [data, setData] = useState(hasKnown ? known : null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
-
+// Player search, waiting until typing pauses. Returns { data: players[], loading, error }.
+export function usePlayerSearch(query, season) {
+  const [debounced, setDebounced] = useState(query)
   useEffect(() => {
-    if (!id) { setData(null); return }
-    if (hasKnown) { setData(known); setError(null); return }
-    let cancelled = false
-    setLoading(true); setData(null); setError(null)
-    getPlayer(id).then(res => { if (!cancelled) setData(res) }).catch(e => { if (!cancelled) setError(e) }).finally(() => { if (!cancelled) setLoading(false) })
-    return () => { cancelled = true }
-  }, [id, hasKnown])
-
-  return { data, loading, error }
+    const t = setTimeout(() => setDebounced(query), 200)
+    return () => clearTimeout(t)
+  }, [query])
+  const q = debounced.trim()
+  const res = useApi(() => searchPlayers(q, season).then(r => r.data), [q, season], { enabled: q.length >= 2 })
+  return { ...res, loading: res.loading || (query.trim() !== q && query.trim().length >= 2) }
 }
 
-export function useSeasonAverages(playerIds = [], season) {
-  const [data, setData] = useState(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
-
-  useEffect(() => {
-    if (!playerIds.length) return
-    let cancelled = false
-    setLoading(true); setData(null); setError(null)
-    getSeasonAverages(playerIds, season).then((res)=>{ if(!cancelled) setData(res) }).catch(e=>{ if(!cancelled) setError(e) }).finally(()=>{ if(!cancelled) setLoading(false) })
-    return () => { cancelled = true }
-  }, [playerIds.join(','), season])
-
-  return { data, loading, error }
-}
-
-export function usePlayerGameLog(id, season) {
-  const [data, setData] = useState(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
-
-  useEffect(() => {
-    if (!id) return
-    let cancelled = false
-    setLoading(true); setData(null); setError(null)
-    getPlayerGameLog(id, season).then(res => { if (!cancelled) setData(res.data || []) }).catch(e => { if (!cancelled) setError(e) }).finally(() => { if (!cancelled) setLoading(false) })
-    return () => { cancelled = true }
-  }, [id, season])
-
-  return { data, loading, error }
-}
-
-// Combined search hook that enriches player search results with season averages
-export function usePlayerSearchWithAverages(query, season) {
-  const [data, setData] = useState(null)
-  const [averagesError, setAveragesError] = useState(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
-
-  useEffect(() => {
-    if (!query || query.trim().length < 2) { setData(null); setLoading(false); return }
-    let cancelled = false
-    setLoading(true); setError(null)
-    const fetch = async () => {
-      try {
-        const playersRes = await searchPlayersWithAverages(query, season)
-        const players = playersRes && playersRes.data ? playersRes.data : []
-        if (!cancelled) setData(players)
-        if (!cancelled) setAveragesError(playersRes?.averages_error || null)
-      } catch (err) {
-        if (!cancelled) setError(err)
-      } finally {
-        if (!cancelled) setLoading(false)
-      }
-    }
-    // Wait until typing pauses, so each name costs one API request.
-    const t = setTimeout(fetch, 400)
-    return () => { cancelled = true; clearTimeout(t) }
-  }, [query, season])
-
-  return { data, loading, error, averagesError }
-}
+export const usePlayerProfile = (id, season) => useApi(() => getPlayerProfile(id, season), [id, season], { enabled: !!id })
+export const usePlayerCareer = (id, enabled = true) => useApi(() => getPlayerCareer(id), [id], { enabled: !!id && enabled })
+export const usePlayerGameLog = (id, season, enabled = true) => useApi(() => getPlayerGameLog(id, season), [id, season], { enabled: !!id && enabled })
+export const usePlayerShots = (id, season, enabled = true) => useApi(() => getPlayerShots(id, season), [id, season], { enabled: !!id && enabled })
+export const usePlayerClutch = (id, season, enabled = true) => useApi(() => getPlayerClutch(id, season), [id, season], { enabled: !!id && enabled })
+export const useComparePlayers = (ids, season) => useApi(() => comparePlayers(ids, season), [ids.join(','), season], { enabled: ids.length >= 2 })
+export const useLeaders = (stat, limit, season) => useApi(() => getLeaders(stat, limit, season), [stat, limit, season])

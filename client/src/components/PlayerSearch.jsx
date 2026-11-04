@@ -1,6 +1,7 @@
 import React, { useEffect, useId, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { usePlayerSearchWithAverages } from '../hooks/usePlayers'
+import { usePlayerSearch } from '../hooks/usePlayers'
+import { errorMessage } from '../services/api'
 import { currentSeason } from '../utils/season'
 
 // Search box with a floating results list.
@@ -11,7 +12,7 @@ export default function PlayerSearch({ onSelect, placeholder = 'Search players' 
   const [active, setActive] = useState(-1)
   const rootRef = useRef(null)
   const listId = useId()
-  const { data, loading, error, averagesError } = usePlayerSearchWithAverages(q, currentSeason())
+  const { data, loading, error } = usePlayerSearch(q, currentSeason())
   const results = data || []
 
   // New results → reset the highlighted row.
@@ -71,7 +72,7 @@ export default function PlayerSearch({ onSelect, placeholder = 'Search players' 
             transition={{ duration: 0.12 }}
             className="absolute z-30 left-0 right-0 mt-2 max-h-96 overflow-y-auto bg-[#141418] border border-white/10 rounded-lg shadow-2xl"
           >
-            {error && <li className="px-4 py-3 text-sm text-white/60">{error.response?.data?.error || 'Search failed.'}</li>}
+            {error && <li className="px-4 py-3 text-sm text-white/60">{errorMessage(error, 'Search failed.')}</li>}
             {!error && results.length === 0 && <li className="px-4 py-3 text-sm text-white/60">No players found for “{trimmed}”.</li>}
             {results.map((p, i) => (
               <li
@@ -82,9 +83,12 @@ export default function PlayerSearch({ onSelect, placeholder = 'Search players' 
                 onMouseDown={e => { e.preventDefault(); pick(p) }}
                 className={`px-4 py-3 cursor-pointer flex justify-between items-center ${i === active ? 'bg-white/10' : ''}`}
               >
-                <div>
-                  <div className="font-medium">{p.first_name} {p.last_name} <span className="text-white/50 text-sm">{p.team?.abbreviation}</span></div>
-                  <div className="text-xs text-white/50">{[p.position, p.height].filter(Boolean).join(' · ') || '—'}</div>
+                <div className="flex items-center gap-3 min-w-0">
+                  <img src={p.headshot} alt="" loading="lazy" className="w-10 h-8 object-cover object-top rounded bg-white/5 shrink-0" onError={e => { e.currentTarget.style.visibility = 'hidden' }} />
+                  <div className="min-w-0">
+                    <div className="font-medium truncate">{p.full_name} <span className="text-white/50 text-sm">{p.team?.abbreviation}</span></div>
+                    <div className="text-xs text-white/50">{p.is_active ? (p.season_avg ? `${p.season_avg.gp} games this season` : 'Active') : 'Former player'}</div>
+                  </div>
                 </div>
                 {p.season_avg?.pts != null && (
                   <div className="text-right">
@@ -94,7 +98,6 @@ export default function PlayerSearch({ onSelect, placeholder = 'Search players' 
                 )}
               </li>
             ))}
-            {averagesError && results.length > 0 && <li className="px-4 py-2 text-xs text-white/40 border-t border-white/10">PPG unavailable: {averagesError}</li>}
           </motion.ul>
         )}
       </AnimatePresence>

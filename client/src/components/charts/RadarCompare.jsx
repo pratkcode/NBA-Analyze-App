@@ -1,6 +1,6 @@
 import React from 'react'
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Legend, Tooltip } from 'recharts'
-import { tooltipProps } from './theme'
+import { tooltipProps, animate } from './theme'
 
 // Values are expected on a 0–100 scale so different stats share one axis.
 export default function RadarCompare({ dataA = [], dataB = [], keys = [], nameA = 'Player A', nameB = 'Player B' }){
@@ -17,9 +17,9 @@ export default function RadarCompare({ dataA = [], dataB = [], keys = [], nameA 
           <PolarGrid stroke="rgba(255,255,255,0.15)" />
           <PolarAngleAxis dataKey="subject" stroke="rgba(255,255,255,0.7)" />
           <PolarRadiusAxis domain={[0, 100]} tick={false} axisLine={false} />
-          <Radar name={nameA} dataKey="A" stroke="#7c5cff" fill="#7c5cff" fillOpacity={0.25} />
-          <Radar name={nameB} dataKey="B" stroke="#00d8ff" fill="#00d8ff" fillOpacity={0.15} />
-          <Tooltip {...tooltipProps} formatter={v => [`${v}%`, 'of elite level']} />
+          <Radar name={nameA} dataKey="A" stroke="#7c5cff" fill="#7c5cff" fillOpacity={0.25} isAnimationActive={animate} />
+          <Radar name={nameB} dataKey="B" stroke="#00d8ff" fill="#00d8ff" fillOpacity={0.15} isAnimationActive={animate} />
+          <Tooltip {...tooltipProps} formatter={(v, name) => [`${v}th percentile`, name]} />
           <Legend wrapperStyle={{ fontSize: 12 }} />
         </RadarChart>
       </ResponsiveContainer>

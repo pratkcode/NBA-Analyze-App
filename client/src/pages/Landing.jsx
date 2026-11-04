@@ -5,9 +5,9 @@ import Card from '../components/Card'
 import Standings from '../components/Standings'
 
 const FEATURES = [
-  { to: '/players', title: 'Player Stats', text: 'Season averages, profile and the last 10 games for any player.' },
-  { to: '/teams', title: 'Teams', text: 'Every NBA team and its upcoming schedule.' },
-  { to: '/compare', title: 'Compare', text: 'Put two players side by side, stat by stat.' },
+  { to: '/players', title: 'Player Stats', text: 'Career and season stats, PER, TS%, usage, game logs, shot charts and clutch numbers.' },
+  { to: '/teams', title: 'Teams', text: 'Rosters, offensive/defensive/net ratings, pace, league rankings and franchise history.' },
+  { to: '/compare', title: 'Compare', text: 'Put two players or two teams side by side, stat by stat.' },
 ]
 
 export default function Landing(){

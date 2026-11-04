@@ -1,6 +1,6 @@
 import React from 'react'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
-import { axisProps, gridProps, tooltipProps } from './theme'
+import { axisProps, gridProps, tooltipProps, animate } from './theme'
 
 export default function SimpleLineChart({ data, dataKey = 'value', stroke = '#7c5cff', label = 'PTS' }){
   return (
@@ -11,7 +11,7 @@ export default function SimpleLineChart({ data, dataKey = 'value', stroke = '#7c
           <XAxis dataKey="name" {...axisProps} />
           <YAxis {...axisProps} axisLine={false} allowDecimals={false} />
           <Tooltip {...tooltipProps} formatter={v => [v, label]} />
-          <Line type="monotone" dataKey={dataKey} stroke={stroke} strokeWidth={3} dot={{ r: 3, fill: stroke }} activeDot={{ r: 5 }} animationDuration={500} />
+          <Line type="monotone" dataKey={dataKey} stroke={stroke} strokeWidth={3} dot={{ r: 3, fill: stroke }} activeDot={{ r: 5 }} isAnimationActive={animate} animationDuration={500} />
         </LineChart>
       </ResponsiveContainer>
     </div>

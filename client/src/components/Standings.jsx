@@ -1,14 +1,17 @@
 import React, { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useStandings } from '../hooks/useTeams'
 import LoadingSkeleton from './LoadingSkeleton'
+import ErrorState from './ErrorState'
 
 // Conference standings with an East/West toggle. `max` limits rows per conference.
-export default function Standings({ max }){
-  const { data, loading, error } = useStandings()
+export default function Standings({ max, season }){
+  const { data: res, loading, error, reload } = useStandings(season)
+  const data = res?.conferences
   const [conf, setConf] = useState(0)
 
   if (loading) return <LoadingSkeleton className="h-64" />
-  if (error) return <div className="text-sm text-white/60">Standings unavailable right now.</div>
+  if (error) return <ErrorState error={error} onRetry={reload} />
   if (!data || data.length === 0) return <div className="text-sm text-white/60">No standings yet.</div>
 
   const current = data[conf] || data[0]
@@ -42,14 +45,14 @@ export default function Standings({ max }){
             <tr key={t.abbreviation} className={`border-t border-white/5 ${t.seed === 6 || t.seed === 10 ? 'border-b border-b-white/20' : ''}`}>
               <td className="py-1.5 text-white/50 tabular-nums">{t.seed}</td>
               <td className="py-1.5">
-                <span className="flex items-center gap-2">
+                <Link to={`/teams/${t.id}`} className="flex items-center gap-2 hover:text-accent transition-colors">
                   {t.logo && <img src={t.logo} alt="" className="w-5 h-5" loading="lazy" />}
                   <span className="hidden sm:inline">{t.name}</span>
                   <span className="sm:hidden">{t.abbreviation}</span>
-                </span>
+                </Link>
               </td>
               <td className="py-1.5 text-right tabular-nums">{t.wins}-{t.losses}</td>
-              <td className="py-1.5 text-right tabular-nums text-white/70">{t.games_behind}</td>
+              <td className="py-1.5 text-right tabular-nums text-white/70">{t.games_behind ? t.games_behind : '–'}</td>
               <td className={`py-1.5 text-right tabular-nums ${t.streak?.startsWith('W') ? 'text-emerald-400' : 'text-red-400'}`}>{t.streak}</td>
             </tr>
           ))}

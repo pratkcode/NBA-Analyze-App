@@ -1,0 +1,4 @@
+{
+  "ext": "js,py",
+  "ignore": [".cache/*", ".venv/*"]
+}

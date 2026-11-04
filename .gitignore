@@ -14,3 +14,10 @@ dist/
 *.log
 .vscode/
 .idea/
+
+# Python
+.venv/
+__pycache__/
+
+# NBA data cache (rebuilt automatically)
+server/.cache/

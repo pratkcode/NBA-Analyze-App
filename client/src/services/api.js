@@ -1,59 +1,35 @@
 import axios from 'axios'
 
-const api = axios.create({ baseURL: '/api', timeout: 10000 })
+// All NBA data comes from our own server (/api), which gets it from NBA.com via nba_api.
+const api = axios.create({ baseURL: '/api', timeout: 95000 })
 
-export async function searchPlayersWithAverages(q, season) {
-  const res = await api.get('/players/with-averages', { params: { search: q, season } })
-  return res.data
-}
+const get = (url, params) => api.get(url, { params }).then(res => res.data)
 
-export async function getPlayer(id) {
-  const res = await api.get(`/players/${id}`)
-  return res.data
-}
+// Players
+export const searchPlayers = (q, season) => get('/players/search', { q, season })
+export const getPlayerProfile = (id, season) => get(`/players/${id}`, { season })
+export const getPlayerCareer = id => get(`/players/${id}/career`)
+export const getPlayerGameLog = (id, season) => get(`/players/${id}/gamelog`, { season })
+export const getPlayerShots = (id, season) => get(`/players/${id}/shots`, { season })
+export const getPlayerClutch = (id, season) => get(`/players/${id}/clutch`, { season })
+export const comparePlayers = (ids, season) => get('/players/compare', { ids: ids.join(','), season })
+export const getLeaders = (stat = 'pts', limit = 10, season) => get('/leaders', { stat, limit, season })
 
-export async function getSeasonAverages(player_ids, season) {
-  const params = { player_ids: player_ids.join(','), season }
-  const res = await api.get('/season_averages', { params })
-  return res.data
-}
+// Teams
+export const getTeams = season => get('/teams', { season })
+export const getTeamList = () => get('/teams/list')
+export const getTeamProfile = (id, season) => get(`/teams/${id}`, { season })
+export const getTeamHistory = id => get(`/teams/${id}/history`)
+export const compareTeams = (ids, season) => get('/teams/compare', { ids: ids.join(','), season })
 
-export async function getTeams() {
-  const res = await api.get('/teams')
-  return res.data
-}
-
-export async function getRecentGames(per_page = 25) {
-  const res = await api.get('/games/recent', { params: { per_page } })
-  return res.data
-}
-
-export async function getLiveScores() {
-  const res = await api.get('/live')
-  return res.data
-}
-
-export async function getStandings() {
-  const res = await api.get('/standings')
-  return res.data
-}
-
-export async function getPlayerGameLog(id, season) {
-  const res = await api.get(`/players/${id}/games`, { params: { season } })
-  return res.data
-}
-
-export async function getTeamUpcoming(teamId) {
-  const res = await api.get(`/teams/${teamId}/upcoming`)
-  return res.data
-}
-
-export async function getTopScorers(limit = 20, season) {
-  const res = await api.get('/leaderboard/top-scorers', { params: { limit, season } })
-  return res.data
-}
+// League
+export const getStandings = season => get('/standings', { season })
+export const getRecentGames = (limit = 10) => get('/games/recent', { limit })
+export const getScoreboard = () => get('/scoreboard')
 
 // Readable message from a failed request (the server sends { error }).
 export function errorMessage(err, fallback = 'Could not load data.') {
-  return err?.response?.data?.error || fallback
+  if (err?.code === 'ECONNABORTED') return 'NBA.com is taking too long to respond. Please try again.'
+  if (err?.response?.status === 502 || err?.response?.status === 504) return err.response.data?.error || 'NBA.com did not respond. Please try again.'
+  return err?.response?.data?.error || (err?.request && !err?.response ? 'Cannot reach the server. Is it running?' : fallback)
 }

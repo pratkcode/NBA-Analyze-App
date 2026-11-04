@@ -1,4 +1,5 @@
 import React from 'react'
+import ErrorBoundary from './ErrorBoundary'
 
 // Plain container. Pass `interactive` for clickable cards to get a hover lift.
 export default function Card({ children, className = '', interactive = false }){
@@ -8,7 +9,7 @@ export default function Card({ children, className = '', interactive = false }){
         interactive ? 'transition duration-200 hover:-translate-y-1 hover:border-white/20 motion-reduce:hover:translate-y-0' : ''
       } ${className}`}
     >
-      {children}
+      <ErrorBoundary>{children}</ErrorBoundary>
     </div>
   )
 }
